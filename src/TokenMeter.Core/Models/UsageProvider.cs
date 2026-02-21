@@ -30,6 +30,7 @@ public enum UsageProvider
     Synthetic,
     Warp,
     OpenRouter,
+    ChatGPT,
 }
 
 /// <summary>
@@ -58,5 +59,6 @@ public enum IconStyle
     Synthetic,
     Warp,
     OpenRouter,
+    ChatGPT,
     Combined,
 }

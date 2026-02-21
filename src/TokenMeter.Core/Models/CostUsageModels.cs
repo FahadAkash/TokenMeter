@@ -7,6 +7,7 @@ namespace TokenMeter.Core.Models;
 public sealed record CostUsageTokenSnapshot
 {
     public int? SessionTokens { get; init; }
+    public int? SessionOutputTokens { get; init; }
     public double? SessionCostUsd { get; init; }
     public int? Last30DaysTokens { get; init; }
     public double? Last30DaysCostUsd { get; init; }

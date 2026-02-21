@@ -19,6 +19,11 @@ public partial class MainWindow : Window
         }
     }
 
+    private void SettingsButton_Click(object sender, RoutedEventArgs e)
+    {
+        ((App)System.Windows.Application.Current).ShowSettingsWindow();
+    }
+
     private void CloseButton_Click(object sender, RoutedEventArgs e)
     {
         // Only hide, let the tray icon handle closing

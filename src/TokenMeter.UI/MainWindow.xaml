@@ -108,10 +108,16 @@
                         </ListBox>
 
                         <Border Grid.Row="2" Background="{StaticResource CatSurface0}" CornerRadius="0,0,0,12" Padding="16">
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                <materialDesign:PackIcon Kind="Update" Foreground="{StaticResource CatBlue}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                <TextBlock Text="TokenMeter v0.1" Foreground="{StaticResource CatSubtext}"/>
-                            </StackPanel>
+                            <Grid>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                                    <materialDesign:PackIcon Kind="Update" Foreground="{StaticResource CatBlue}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <TextBlock Text="v0.1" Foreground="{StaticResource CatSubtext}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                                <Button HorizontalAlignment="Right" Background="Transparent" BorderThickness="0" Padding="4"
+                                        Click="SettingsButton_Click" ToolTip="Settings &amp; Auth">
+                                    <materialDesign:PackIcon Kind="Settings" Foreground="{StaticResource CatSubtext}" Width="18" Height="18"/>
+                                </Button>
+                            </Grid>
                         </Border>
                     </Grid>
                 </Border>

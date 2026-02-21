@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\TokenMeter.Core\TokenMeter.Core.csproj" />
+    <ProjectReference Include="..\TokenMeter.Auth\TokenMeter.Auth.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -10,7 +11,7 @@
   </ItemGroup>
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net8.0-windows</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
