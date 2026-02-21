@@ -1,0 +1,27 @@
+﻿Application: TokenMeter.UI.exe
+CoreCLR Version: 8.0.2125.47513
+.NET Version: 8.0.21
+Description: The process was terminated due to an unhandled exception.
+Exception Info: System.Windows.Markup.XamlParseException: 'Provide value on 'System.Windows.StaticResourceExtension' threw an exception.' Line number '32' and line position '25'.
+ ---> System.Exception: Cannot find resource named 'MaterialDesignToolButton'. Resource names are case sensitive.
+   at System.Windows.StaticResourceExtension.ProvideValueInternal(IServiceProvider serviceProvider, Boolean allowDeferredReference)
+   at MS.Internal.Xaml.Runtime.ClrObjectRuntime.CallProvideValue(MarkupExtension me, IServiceProvider serviceProvider)
+   --- End of inner exception stack trace ---
+   at System.Windows.Markup.XamlReader.RewrapException(Exception e, IXamlLineInfo lineInfo, Uri baseUri)
+   at System.Windows.Markup.WpfXamlLoader.Load(XamlReader xamlReader, IXamlObjectWriterFactory writerFactory, Boolean skipJournaledProperties, Object rootObject, XamlObjectWriterSettings settings, Uri baseUri)
+   at System.Windows.Markup.WpfXamlLoader.LoadBaml(XamlReader xamlReader, Boolean skipJournaledProperties, Object rootObject, XamlAccessLevel accessLevel, Uri baseUri)
+   at System.Windows.Markup.XamlReader.LoadBaml(Stream stream, ParserContext parserContext, Object parent, Boolean closeStream)
+   at System.Windows.Application.LoadComponent(Object component, Uri resourceLocator)
+   at TokenMeter.UI.MainWindow.InitializeComponent() in f:\gihtub\github-profile\CodexBar\TokenMeter\src\TokenMeter.UI\MainWindow.xaml:line 1
+   at TokenMeter.UI.MainWindow..ctor() in f:\gihtub\github-profile\CodexBar\TokenMeter\src\TokenMeter.UI\MainWindow.xaml.cs:line 10
+   at TokenMeter.UI.App.ShowMainWindow() in f:\gihtub\github-profile\CodexBar\TokenMeter\src\TokenMeter.UI\App.xaml.cs:line 86
+   at TokenMeter.UI.App.<OnStartup>b__2_0(Object _, RoutedEventArgs _) in f:\gihtub\github-profile\CodexBar\TokenMeter\src\TokenMeter.UI\App.xaml.cs:line 36
+   at System.Windows.EventRoute.InvokeHandlersImpl(Object source, RoutedEventArgs args, Boolean reRaised)
+   at System.Windows.UIElement.RaiseEventImpl(DependencyObject sender, RoutedEventArgs args)
+   at Hardcodet.Wpf.TaskbarNotification.RoutedEventHelper.RaiseEvent(DependencyObject target, RoutedEventArgs args) in D:\a\1\s\src\NotifyIconWpf\RoutedEventHelper.cs:line 28
+   at Hardcodet.Wpf.TaskbarNotification.TaskbarIcon.RaiseTrayMouseDoubleClickEvent(DependencyObject target) in D:\a\1\s\src\NotifyIconWpf\TaskbarIcon.Declarations.cs:line 1250
+   at Hardcodet.Wpf.TaskbarNotification.TaskbarIcon.RaiseTrayMouseDoubleClickEvent() in D:\a\1\s\src\NotifyIconWpf\TaskbarIcon.Declarations.cs:line 1236
+   at Hardcodet.Wpf.TaskbarNotification.TaskbarIcon.OnMouseEvent(MouseEvent me) in D:\a\1\s\src\NotifyIconWpf\TaskbarIcon.cs:line 394
+   at Hardcodet.Wpf.TaskbarNotification.Interop.WindowMessageSink.ProcessWindowMessage(UInt32 msg, IntPtr wParam, IntPtr lParam) in D:\a\1\s\src\NotifyIconWpf\Interop\WindowMessageSink.cs:line 266
+   at Hardcodet.Wpf.TaskbarNotification.Interop.WindowMessageSink.OnWindowMessageReceived(IntPtr hWnd, UInt32 messageId, IntPtr wParam, IntPtr lParam) in D:\a\1\s\src\NotifyIconWpf\Interop\WindowMessageSink.cs:line 196
+

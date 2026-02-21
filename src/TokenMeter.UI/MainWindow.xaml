@@ -1,0 +1,183 @@
+﻿<Window x:Class="TokenMeter.UI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
+        Title="TokenMeter" Width="850" Height="650"
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        TextElement.Foreground="{StaticResource MaterialDesignBody}"
+        TextElement.FontWeight="Regular"
+        TextElement.FontSize="13"
+        TextOptions.TextFormattingMode="Ideal"
+        TextOptions.TextRenderingMode="Auto"
+        FontFamily="Segoe UI Variable Text, Segoe UI">
+
+    <!-- Window Border with Drop Shadow -->
+    <Border Background="{StaticResource CatMantle}" CornerRadius="12" Margin="10">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="15" ShadowDepth="4" Opacity="0.3" Color="Black"/>
+        </Border.Effect>
+        
+        <Grid>
+            <!-- Custom Title Bar (to drag the window since WindowStyle=None) -->
+            <Grid Height="32" VerticalAlignment="Top" Background="Transparent" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown" Panel.ZIndex="10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="TokenMeter" Margin="16,0,0,0" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="{StaticResource CatSubtext}"/>
+                <Button Grid.Column="1" Background="Transparent" BorderThickness="0" Width="32" Height="32" Padding="0" Click="CloseButton_Click" ToolTip="Hide to Tray">
+                    <materialDesign:PackIcon Kind="Close" Width="16" Height="16" Foreground="{StaticResource CatSubtext}"/>
+                </Button>
+            </Grid>
+
+            <!-- Main Layout (2 Columns) -->
+            <Grid Margin="0,32,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="260" /> <!-- Sidebar -->
+                    <ColumnDefinition Width="*" /> <!-- Info & Charts -->
+                </Grid.ColumnDefinitions>
+
+                <!-- Left Sidebar: Provider List -->
+                <Border Grid.Column="0" Background="{StaticResource CatBase}" CornerRadius="0,0,0,12">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        
+                        <!-- Search / Header -->
+                        <Border Grid.Row="0" Margin="16,16,16,8" Background="{StaticResource CatSurface0}" CornerRadius="6" Padding="8,6">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="Search" Foreground="{StaticResource CatSubtext}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBox materialDesign:HintAssist.Hint="Search providers..." BorderThickness="0" Background="Transparent" Foreground="{StaticResource CatText}" CaretBrush="{StaticResource CatBlue}" Width="180"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Provider List Box -->
+                        <ListBox Grid.Row="1" ItemsSource="{Binding Providers}" SelectedItem="{Binding SelectedProvider}"
+                                 Margin="8,0,8,0" Background="Transparent" BorderThickness="0"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem">
+                                    <Setter Property="Padding" Value="12,8"/>
+                                    <Setter Property="Margin" Value="0,2"/>
+                                    <Setter Property="Validation.ErrorTemplate" Value="{x:Null}"/>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter Property="Background" Value="{StaticResource CatSurface1}"/>
+                                        </Trigger>
+                                        <MultiTrigger>
+                                            <MultiTrigger.Conditions>
+                                                <Condition Property="IsMouseOver" Value="True"/>
+                                                <Condition Property="IsSelected" Value="False"/>
+                                            </MultiTrigger.Conditions>
+                                            <Setter Property="Background" Value="{StaticResource CatSurface0}"/>
+                                        </MultiTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="32"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        
+                                        <!-- Provider Icon (Placeholder for now) -->
+                                        <Border Width="24" Height="24" CornerRadius="4" Background="{Binding StatusColor}" HorizontalAlignment="Left">
+                                            <TextBlock Text="{Binding Name[0]}" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource CatText}"/>
+                                            <TextBlock Text="{Binding StatusText}" FontSize="11" Foreground="{StaticResource CatSubtext}" Margin="0,2,0,0"/>
+                                        </StackPanel>
+
+                                        <!-- Status Indicator Dot -->
+                                        <Ellipse Grid.Column="2" Width="8" Height="8" Fill="{Binding StatusColor}" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+
+                        <Border Grid.Row="2" Background="{StaticResource CatSurface0}" CornerRadius="0,0,0,12" Padding="16">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <materialDesign:PackIcon Kind="Update" Foreground="{StaticResource CatBlue}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock Text="TokenMeter v0.1" Foreground="{StaticResource CatSubtext}"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- Right Content Area -->
+                <Grid Grid.Column="1" Margin="32,24,32,32">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0">
+                        <TextBlock Text="{Binding SelectedProvider.Name, FallbackValue='Select a Provider'}" Style="{StaticResource HeaderStyle}" FontFamily="Segoe UI Variable Display, Segoe UI"/>
+                        <TextBlock Text="Historical Usage &amp; Cost" Style="{StaticResource SubtextStyle}" Margin="0,4,0,0"/>
+                    </StackPanel>
+
+                    <!-- Summary Cards -->
+                    <Grid Grid.Row="1" Margin="0,24,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="16"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="16"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0" Background="{StaticResource CatSurface0}" CornerRadius="8" Padding="16">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="Finance" Foreground="{StaticResource CatGreen}" Margin="0,0,8,0"/>
+                                    <TextBlock Text="Total Cost" Foreground="{StaticResource CatSubtext}" FontWeight="SemiBold"/>
+                                </StackPanel>
+                                <TextBlock Text="{Binding SelectedProvider.TotalCostUsd, StringFormat='{}{0:C2}', FallbackValue='$0.00'}" FontSize="28" FontWeight="Bold" Foreground="{StaticResource CatText}" Margin="0,8,0,0"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="2" Background="{StaticResource CatSurface0}" CornerRadius="8" Padding="16">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="Login" Foreground="{StaticResource CatBlue}" Margin="0,0,8,0"/>
+                                    <TextBlock Text="Input Tokens" Foreground="{StaticResource CatSubtext}" FontWeight="SemiBold"/>
+                                </StackPanel>
+                                <TextBlock Text="{Binding SelectedProvider.InputTokens, StringFormat='{}{0:N0}', FallbackValue='0'}" FontSize="28" FontWeight="Bold" Foreground="{StaticResource CatText}" Margin="0,8,0,0"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="4" Background="{StaticResource CatSurface0}" CornerRadius="8" Padding="16">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="Logout" Foreground="{StaticResource CatRed}" Margin="0,0,8,0"/>
+                                    <TextBlock Text="Output Tokens" Foreground="{StaticResource CatSubtext}" FontWeight="SemiBold"/>
+                                </StackPanel>
+                                <TextBlock Text="{Binding SelectedProvider.OutputTokens, StringFormat='{}{0:N0}', FallbackValue='0'}" FontSize="28" FontWeight="Bold" Foreground="{StaticResource CatText}" Margin="0,8,0,0"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <!-- LiveCharts2 Cartesian Chart -->
+                    <Border Grid.Row="2" Background="{StaticResource CatBase}" CornerRadius="8" Margin="0,24,0,0" Padding="16">
+                        <lvc:CartesianChart Series="{Binding SelectedProvider.ChartSeries}" XAxes="{Binding SelectedProvider.XAxes}" TooltipPosition="Top" LegendPosition="Hidden">
+                        </lvc:CartesianChart>
+                    </Border>
+                </Grid>
+                
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

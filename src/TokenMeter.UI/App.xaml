@@ -1,0 +1,47 @@
+﻿<Application x:Class="TokenMeter.UI.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             ShutdownMode="OnExplicitShutdown">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <materialDesign:BundledTheme BaseTheme="Dark" PrimaryColor="DeepPurple" SecondaryColor="Indigo" />
+                
+                <!-- Refined Catppuccin Macchiato Base Colors -->
+                <ResourceDictionary>
+                    <SolidColorBrush x:Key="CatBase" Color="#24273A"/>
+                    <SolidColorBrush x:Key="CatMantle" Color="#1E2030"/>
+                    <SolidColorBrush x:Key="CatCrust" Color="#181926"/>
+                    <SolidColorBrush x:Key="CatSurface0" Color="#363A4F"/>
+                    <SolidColorBrush x:Key="CatSurface1" Color="#494D64"/>
+                    <SolidColorBrush x:Key="CatText" Color="#CAD3F5"/>
+                    <SolidColorBrush x:Key="CatSubtext" Color="#A5ADCB"/>
+                    <SolidColorBrush x:Key="CatBlue" Color="#8AADF4"/>
+                    <SolidColorBrush x:Key="CatGreen" Color="#A6DA95"/>
+                    <SolidColorBrush x:Key="CatRed" Color="#ED8796"/>
+
+                    <!-- Theme Overrides for MaterialDesign -->
+                    <SolidColorBrush x:Key="MaterialDesignPaper" Color="#24273A" /> <!-- Base -->
+                    <SolidColorBrush x:Key="MaterialDesignBackground" Color="#1E2030" /> <!-- Mantle -->
+                    <SolidColorBrush x:Key="MaterialDesignBody" Color="#CAD3F5" /> <!-- Text -->
+                    <SolidColorBrush x:Key="PrimaryHueMidBrush" Color="#8AADF4" /> <!-- Blue -->
+                    <SolidColorBrush x:Key="SecondaryHueMidBrush" Color="#C6A0F6" /> <!-- Mauve -->
+                    
+                    <Style x:Key="HeaderStyle" TargetType="{x:Type TextBlock}">
+                        <Setter Property="FontSize" Value="24"/>
+                        <Setter Property="FontWeight" Value="SemiBold"/>
+                        <Setter Property="Foreground" Value="{StaticResource CatText}"/>
+                        <Setter Property="FontFamily" Value="Segoe UI Variable Display, Segoe UI"/>
+                    </Style>
+
+                    <Style x:Key="SubtextStyle" TargetType="{x:Type TextBlock}">
+                        <Setter Property="FontSize" Value="13"/>
+                        <Setter Property="Foreground" Value="{StaticResource CatSubtext}"/>
+                        <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI"/>
+                    </Style>
+                </ResourceDictionary>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>
