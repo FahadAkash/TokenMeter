@@ -12,6 +12,8 @@
             </ResourceDictionary.MergedDictionaries>
 
             <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
+            <converters:ProviderToUrlConverter x:Key="ProviderToUrlConverter"/>
+            <converters:HexToBrushConverter x:Key="HexToBrushConverter"/>
 
             <!-- Refined Catppuccin Macchiato Base Colors -->
             <SolidColorBrush x:Key="CatBase" Color="#24273A"/>

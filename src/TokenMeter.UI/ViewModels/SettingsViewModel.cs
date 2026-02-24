@@ -1,9 +1,14 @@
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using TokenMeter.Auth;
 using TokenMeter.Core.Models;
+using TokenMeter.Probes;
+using TokenMeter.Probes.Settings;
 
 namespace TokenMeter.UI.ViewModels;
 
@@ -12,12 +17,9 @@ public partial class SettingsViewModel : ObservableObject
     private readonly ITokenStore _tokenStore;
     private readonly AuthRegistry _authRegistry;
 
-    [ObservableProperty] private string _claudeCookie = string.Empty;
-    [ObservableProperty] private string _chatgptCookie = string.Empty;
-    [ObservableProperty] private string _cursorCookie = string.Empty;
-    [ObservableProperty] private string _copilotToken = string.Empty;
-    [ObservableProperty] private string _authCode = string.Empty;
+    public ObservableCollection<ProviderSettingsViewModel> ProviderSettings { get; } = new();
 
+    [ObservableProperty] private string _authCode = string.Empty;
     [ObservableProperty] private string _statusMessage = "Ready";
 
     public SettingsViewModel(ITokenStore tokenStore, AuthRegistry authRegistry)
@@ -28,41 +30,104 @@ public partial class SettingsViewModel : ObservableObject
         LoadTokensCommand = new AsyncRelayCommand(LoadTokensAsync);
         SaveTokensCommand = new AsyncRelayCommand(SaveTokensAsync);
         AutoDetectCommand = new AsyncRelayCommand(() => AutoDetectAsync(null));
-        LoginCopilotCommand = new AsyncRelayCommand(LoginCopilotAsync);
 
-        // Specific Detect Commands
-        AutoDetectClaudeCommand = new AsyncRelayCommand(() => AutoDetectAsync(UsageProvider.Claude));
-        AutoDetectChatGPTCommand = new AsyncRelayCommand(() => AutoDetectAsync(UsageProvider.ChatGPT));
-        AutoDetectCursorCommand = new AsyncRelayCommand(() => AutoDetectAsync(UsageProvider.Cursor));
+        // Define settings metadata per provider
+        var defaultSourceOptions = new[] { "Auto", "Web", "Cli", "OAuth", "Api" };
+        var settingsRegistry = new Dictionary<UsageProvider, ProviderSettingsDescriptor>
+        {
+            [UsageProvider.Claude] = new()
+            {
+                ProviderId = UsageProvider.Claude,
+                Settings = new[] {
+                    new ProviderSettingDefinition { Key = "claude_source_mode", DisplayName = "Source", Type = ProviderSettingType.Picker, Options = defaultSourceOptions, DefaultValue = "Auto" },
+                    new ProviderSettingDefinition { Key = "claude_cookie", DisplayName = "Session Key (sessionKey=...)", Type = ProviderSettingType.SecretField }
+                }
+            },
+            [UsageProvider.ChatGPT] = new()
+            {
+                ProviderId = UsageProvider.ChatGPT,
+                Settings = new[] {
+                    new ProviderSettingDefinition { Key = "chatgpt_source_mode", DisplayName = "Source", Type = ProviderSettingType.Picker, Options = defaultSourceOptions, DefaultValue = "Auto" },
+                    new ProviderSettingDefinition { Key = "chatgpt_cookie", DisplayName = "Session Token (__Secure...)", Type = ProviderSettingType.SecretField }
+                }
+            },
+            [UsageProvider.Cursor] = new()
+            {
+                ProviderId = UsageProvider.Cursor,
+                Settings = new[] {
+                    new ProviderSettingDefinition { Key = "cursor_source_mode", DisplayName = "Source", Type = ProviderSettingType.Picker, Options = defaultSourceOptions, DefaultValue = "Auto" },
+                    new ProviderSettingDefinition { Key = "cursor_cookie", DisplayName = "Cursor Token (WorkosCursor...)", Type = ProviderSettingType.SecretField }
+                }
+            },
+            [UsageProvider.Copilot] = new()
+            {
+                ProviderId = UsageProvider.Copilot,
+                Settings = new[] {
+                    new ProviderSettingDefinition { Key = "copilot_source_mode", DisplayName = "Source", Type = ProviderSettingType.Picker, Options = defaultSourceOptions, DefaultValue = "Auto" },
+                    new ProviderSettingDefinition { Key = "copilot_token", DisplayName = "GitHub API Token (ghp_...)", Type = ProviderSettingType.SecretField }
+                }
+            }
+        };
 
-        // Browser Open Commands
-        OpenClaudeUrlCommand = new RelayCommand(() => OpenUrl("https://claude.ai/login"));
-        OpenChatGPTUrlCommand = new RelayCommand(() => OpenUrl("https://chatgpt.com/auth/login"));
-        OpenCursorUrlCommand = new RelayCommand(() => OpenUrl("https://cursor.com/login"));
+        // Initialize view models
+        foreach (var desc in ProviderDescriptorRegistry.All.Where(d => settingsRegistry.ContainsKey(d.Id)))
+        {
+            var vm = new ProviderSettingsViewModel { Descriptor = desc };
+            vm.Initialize(settingsRegistry[desc.Id], new Dictionary<string, string>());
+            ProviderSettings.Add(vm);
+        }
     }
 
     public IAsyncRelayCommand LoadTokensCommand { get; }
     public IAsyncRelayCommand SaveTokensCommand { get; }
     public IAsyncRelayCommand AutoDetectCommand { get; }
-    public IAsyncRelayCommand LoginCopilotCommand { get; }
 
-    public IAsyncRelayCommand AutoDetectClaudeCommand { get; }
-    public IAsyncRelayCommand AutoDetectChatGPTCommand { get; }
-    public IAsyncRelayCommand AutoDetectCursorCommand { get; }
+    // Provide single auto-detect bound dynamically from view with command parameter
+    [RelayCommand]
+    private async Task AutoDetectProviderAsync(UsageProvider provider)
+    {
+        await AutoDetectAsync(provider);
+    }
 
-    public IRelayCommand OpenClaudeUrlCommand { get; }
-    public IRelayCommand OpenChatGPTUrlCommand { get; }
-    public IRelayCommand OpenCursorUrlCommand { get; }
+    [RelayCommand]
+    private void OpenProviderUrl(string url)
+    {
+        if (string.IsNullOrEmpty(url)) return;
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = url,
+                UseShellExecute = true
+            });
+            StatusMessage = "Opening browser for login...";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Failed to open browser: {ex.Message}";
+        }
+    }
 
     private async Task LoadTokensAsync()
     {
         try
         {
             StatusMessage = "Loading credentials...";
-            ClaudeCookie = await _tokenStore.GetAsync("claude_cookie") ?? "";
-            ChatgptCookie = await _tokenStore.GetAsync("chatgpt_cookie") ?? "";
-            CursorCookie = await _tokenStore.GetAsync("cursor_cookie") ?? "";
-            CopilotToken = await _tokenStore.GetAsync("copilot_token") ?? "";
+            foreach (var providerVm in ProviderSettings)
+            {
+                foreach (var setting in providerVm.Settings)
+                {
+                    var val = await _tokenStore.GetAsync(setting.Definition.Key);
+                    if (val != null)
+                    {
+                        setting.Value = val;
+                        if (setting.IsToggle && bool.TryParse(val, out var b))
+                        {
+                            setting.ToggleValue = b;
+                        }
+                    }
+                }
+            }
             StatusMessage = "Credentials loaded.";
         }
         catch (Exception ex)
@@ -76,10 +141,13 @@ public partial class SettingsViewModel : ObservableObject
         try
         {
             StatusMessage = "Saving...";
-            await _tokenStore.SetAsync("claude_cookie", ClaudeCookie);
-            await _tokenStore.SetAsync("chatgpt_cookie", ChatgptCookie);
-            await _tokenStore.SetAsync("cursor_cookie", CursorCookie);
-            await _tokenStore.SetAsync("copilot_token", CopilotToken);
+            foreach (var providerVm in ProviderSettings)
+            {
+                foreach (var setting in providerVm.Settings)
+                {
+                    await _tokenStore.SetAsync(setting.Definition.Key, setting.Value ?? string.Empty);
+                }
+            }
             StatusMessage = "Saved successfully.";
         }
         catch (Exception ex)
@@ -92,6 +160,12 @@ public partial class SettingsViewModel : ObservableObject
     {
         try
         {
+            if (specificProvider == UsageProvider.Copilot)
+            {
+                await LoginCopilotAsync();
+                return;
+            }
+
             StatusMessage = specificProvider.HasValue ? $"Scanning for {specificProvider}..." : "Scanning browsers...";
 
             var allRunners = _authRegistry.GetAllRunners().Where(r => r.DisplayName.Contains("Extraction")).ToList();
@@ -132,23 +206,6 @@ public partial class SettingsViewModel : ObservableObject
         }
     }
 
-    private void OpenUrl(string url)
-    {
-        try
-        {
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-            {
-                FileName = url,
-                UseShellExecute = true
-            });
-            StatusMessage = "Opening browser for login...";
-        }
-        catch (Exception ex)
-        {
-            StatusMessage = $"Failed to open browser: {ex.Message}";
-        }
-    }
-
     private async Task LoginCopilotAsync()
     {
         try
@@ -172,7 +229,7 @@ public partial class SettingsViewModel : ObservableObject
 
                 if (await runner.AuthenticateAsync(wrappedLogger))
                 {
-                    CopilotToken = await _tokenStore.GetAsync("copilot_token") ?? "";
+                    await LoadTokensAsync();
                     StatusMessage = "Copilot login successful!";
                     AuthCode = string.Empty;
                 }

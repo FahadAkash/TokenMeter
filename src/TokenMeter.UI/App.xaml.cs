@@ -56,6 +56,8 @@ public partial class App : System.Windows.Application
             {
                 services.AddHttpClient();
                 services.AddSingleton<ITokenStore, WindowsCredentialStore>();
+                services.AddSingleton<CookieCacheService>();
+                services.AddSingleton<TokenAccountManager>();
                 services.AddSingleton<ClaudeCookieLoginRunner>();
                 services.AddSingleton<ChatGPTCookieLoginRunner>();
                 services.AddSingleton<CursorCookieLoginRunner>();
@@ -88,18 +90,38 @@ public partial class App : System.Windows.Application
                 services.AddTransient<OpenAIApiProbe>();
                 services.AddTransient<CopilotApiProbe>();
                 services.AddTransient<CursorApiProbe>();
+                // Generic JSON API Probe
+                services.AddTransient<GenericApiProbe>();
+
+                // CLI fallbacks
+                services.AddTransient<ClaudeCliProbe>();
+                services.AddTransient<OpenAICliProbe>();
+                services.AddTransient<CopilotCliProbe>();
+                services.AddTransient<CursorCliProbe>();
 
                 // Register Pipeline
                 services.AddSingleton<ProviderFetchPipeline>(sp =>
                 {
                     return new ProviderFetchPipeline(async context =>
                     {
+                        // Default auto-order: prefer web/oauth probes, then fall back to CLI
                         IReadOnlyList<IProviderFetchStrategy> probes = [
                             sp.GetRequiredService<AnthropicApiProbe>(),
                             sp.GetRequiredService<OpenAIApiProbe>(), // Now used for ChatGPT
                             sp.GetRequiredService<CopilotApiProbe>(),
-                            sp.GetRequiredService<CursorApiProbe>()
+                            sp.GetRequiredService<CursorApiProbe>(),
+                            sp.GetRequiredService<GenericApiProbe>(),
+                            sp.GetRequiredService<ClaudeCliProbe>(),
+                            sp.GetRequiredService<OpenAICliProbe>(),
+                            sp.GetRequiredService<CopilotCliProbe>(),
+                            sp.GetRequiredService<CursorCliProbe>()
                         ];
+                        // If user explicitly requested CLI mode, prefer CLI strategies first
+                        if (context.SourceMode == ProviderSourceMode.Cli)
+                        {
+                            probes = probes.OrderBy(p => p.Kind == ProviderFetchKind.Cli ? 0 : 1).ToArray();
+                        }
+
                         return probes;
                     });
                 });

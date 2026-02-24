@@ -131,12 +131,33 @@
                     </Grid.RowDefinitions>
 
                     <StackPanel Grid.Row="0">
-                        <TextBlock Text="{Binding SelectedProvider.Name, FallbackValue='Select a Provider'}" Style="{StaticResource HeaderStyle}" FontFamily="Segoe UI Variable Display, Segoe UI"/>
+                        <!-- Header text changes depending on if a provider is selected -->
+                        <TextBlock FontFamily="Segoe UI Variable Display, Segoe UI">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource HeaderStyle}">
+                                    <Setter Property="Text" Value="{Binding SelectedProvider.Name}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding SelectedProvider.Name}" Value="Overview">
+                                            <Setter Property="Text" Value="Total App Cost Overview"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
                         <TextBlock Text="Historical Usage &amp; Cost" Style="{StaticResource SubtextStyle}" Margin="0,4,0,0"/>
                     </StackPanel>
 
-                    <!-- Summary Cards -->
+                    <!-- Summary Cards (Per Provider mode) -->
                     <Grid Grid.Row="1" Margin="0,24,0,0">
+                        <Grid.Style>
+                            <Style TargetType="Grid">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding SelectedProvider.Name}" Value="Overview">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Grid.Style>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="16"/>
@@ -176,9 +197,58 @@
                         </Border>
                     </Grid>
 
-                    <!-- LiveCharts2 Cartesian Chart -->
+                    <!-- Summary Cards (Overview mode) -->
+                    <Grid Grid.Row="1" Margin="0,24,0,0">
+                        <Grid.Style>
+                            <Style TargetType="Grid">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding SelectedProvider.Name}" Value="Overview">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Grid.Style>
+                        
+                        <Border Background="{StaticResource CatSurface0}" CornerRadius="8" Padding="16" HorizontalAlignment="Left" MinWidth="250">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="Finance" Foreground="{StaticResource CatGreen}" Margin="0,0,8,0"/>
+                                    <TextBlock Text="Aggregated Spend (Today)" Foreground="{StaticResource CatSubtext}" FontWeight="SemiBold"/>
+                                </StackPanel>
+                                <TextBlock Text="{Binding TotalCostUsdToday, StringFormat='{}{0:C2}', FallbackValue='$0.00'}" FontSize="28" FontWeight="Bold" Foreground="{StaticResource CatText}" Margin="0,8,0,0"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <!-- LiveCharts2 Cartesian Chart (Per Provider) -->
                     <Border Grid.Row="2" Background="{StaticResource CatBase}" CornerRadius="8" Margin="0,24,0,0" Padding="16">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding SelectedProvider.Name}" Value="Overview">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
                         <lvc:CartesianChart Series="{Binding SelectedProvider.ChartSeries}" XAxes="{Binding SelectedProvider.XAxes}" TooltipPosition="Top" LegendPosition="Hidden">
+                        </lvc:CartesianChart>
+                    </Border>
+                    
+                    <!-- LiveCharts2 Cartesian Chart (Overview) -->
+                    <Border Grid.Row="2" Background="{StaticResource CatBase}" CornerRadius="8" Margin="0,24,0,0" Padding="16">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding SelectedProvider.Name}" Value="Overview">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <lvc:CartesianChart Series="{Binding TotalCostSeries}" XAxes="{Binding TotalCostXAxes}" TooltipPosition="Top" LegendPosition="Hidden">
                         </lvc:CartesianChart>
                     </Border>
                 </Grid>

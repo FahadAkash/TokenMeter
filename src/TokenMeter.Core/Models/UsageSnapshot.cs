@@ -1,6 +1,25 @@
 namespace TokenMeter.Core.Models;
 
 /// <summary>
+/// Represents a rate limit window (e.g., 5-hour session, 7-day weekly).
+/// Stores real usage percentage and reset timing from provider APIs.
+/// </summary>
+public sealed record RateWindow
+{
+    /// <summary>Percentage of the window that has been used (0-100).</summary>
+    public required double UsedPercent { get; init; }
+
+    /// <summary>When the window resets (if known).</summary>
+    public DateTimeOffset? ResetsAt { get; init; }
+
+    /// <summary>Calculate remaining percentage.</summary>
+    public double RemainingPercent => Math.Max(0, 100.0 - UsedPercent);
+
+    /// <summary>Check if the window is exhausted (&gt;= 100%).</summary>
+    public bool IsExhausted => UsedPercent >= 100.0;
+}
+
+/// <summary>
 /// The status of a provider probe result.
 /// </summary>
 public enum UsageStatus
@@ -64,12 +83,4 @@ public sealed record OpenAIDashboardSnapshot
     public DateTimeOffset? BillingCycleEnd { get; init; }
 }
 
-/// <summary>
-/// Aggregate cost snapshot for a single provider.
-/// </summary>
-public sealed record ProviderCostSnapshot
-{
-    public required UsageProvider Provider { get; init; }
-    public double TotalCostUsd { get; init; }
-    public DateTimeOffset UpdatedAt { get; init; }
-}
+

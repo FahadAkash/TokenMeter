@@ -41,113 +41,100 @@
                     <TextBlock Text="Paste browser cookies or API tokens below. Use the Auto-Detect button below to try gathering them automatically." 
                                Style="{DynamicResource SubtextStyle}" Margin="0,0,0,24" TextWrapping="Wrap"/>
 
-                    <!-- Claude -->
-                    <materialDesign:Card Padding="24" UniformCornerRadius="12" Background="{DynamicResource CatSurface0}" Margin="0,0,0,20">
-                        <StackPanel>
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
-                                <materialDesign:PackIcon Kind="MoonWaningCrescent" Foreground="{DynamicResource CatMauve}" VerticalAlignment="Center" Width="24" Height="24"/>
-                                <TextBlock Text="Anthropic Claude" Style="{DynamicResource HeaderStyle}" FontSize="18" Margin="12,0,0,0" VerticalAlignment="Center"/>
-                            </StackPanel>
-                            
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
-                                <Button Content="Auto-Detect Session" Command="{Binding AutoDetectClaudeCommand}" 
-                                        Style="{DynamicResource AuthActionButton}" Foreground="{DynamicResource CatMauve}"
-                                        ToolTip="Scans browser cookies specifically for claude.ai"/>
-                                <Button Content="Authorize via Browser (OAuth Flow)" Command="{Binding OpenClaudeUrlCommand}" 
-                                        Style="{DynamicResource AuthActionButton}" Foreground="{DynamicResource CatSubtext}" 
-                                        Margin="12,0,0,0"/>
-                            </StackPanel>
+                    <ItemsControl ItemsSource="{Binding ProviderSettings}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <materialDesign:Card Padding="24" UniformCornerRadius="12" Background="{DynamicResource CatSurface0}" Margin="0,0,0,20">
+                                    <StackPanel>
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                                            <materialDesign:PackIcon Kind="{Binding IconKind}" Foreground="{Binding ColorHex, Converter={StaticResource HexToBrushConverter}}" VerticalAlignment="Center" Width="24" Height="24"/>
+                                            <TextBlock Text="{Binding DisplayName}" Style="{DynamicResource HeaderStyle}" FontSize="18" Margin="12,0,0,0" VerticalAlignment="Center"/>
+                                        </StackPanel>
 
-                            <TextBox Style="{DynamicResource PremiumTextBox}"
-                                     materialDesign:HintAssist.Hint="Session Key (sessionKey=...)" 
-                                     Text="{Binding ClaudeCookie}" 
-                                     materialDesign:TextFieldAssist.UnderlineBrush="{DynamicResource CatMauve}"/>
-                        </StackPanel>
-                    </materialDesign:Card>
+                                        <!-- Generic Auto Detect / Browser Auth -->
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                                            <Button Content="Auto-Detect Session" 
+                                                    Command="{Binding DataContext.AutoDetectProviderCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
+                                                    CommandParameter="{Binding ProviderId}"
+                                                    Style="{DynamicResource AuthActionButton}" 
+                                                    Foreground="{Binding ColorHex, Converter={StaticResource HexToBrushConverter}}"
+                                                    ToolTip="Scans browser cookies for this provider"/>
+                                            <Button Content="Authorize via Browser / External" 
+                                                    Command="{Binding DataContext.OpenProviderUrlCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
+                                                    CommandParameter="{Binding ProviderId, Converter={StaticResource ProviderToUrlConverter}}"
+                                                    Style="{DynamicResource AuthActionButton}" 
+                                                    Foreground="{DynamicResource CatSubtext}" 
+                                                    Margin="12,0,0,0"/>
+                                        </StackPanel>
 
-
-                    <!-- Cursor -->
-                    <materialDesign:Card Padding="24" UniformCornerRadius="12" Background="{DynamicResource CatSurface0}" Margin="0,0,0,20">
-                        <StackPanel>
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
-                                <materialDesign:PackIcon Kind="CodeBraces" Foreground="{DynamicResource CatMauve}" VerticalAlignment="Center" Width="24" Height="24"/>
-                                <TextBlock Text="Cursor" Style="{DynamicResource HeaderStyle}" FontSize="18" Margin="12,0,0,0" VerticalAlignment="Center"/>
-                            </StackPanel>
-
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
-                                <Button Content="Auto-Detect Session" Command="{Binding AutoDetectCursorCommand}" 
-                                        Style="{DynamicResource AuthActionButton}" Foreground="{DynamicResource CatMauve}"
-                                        ToolTip="Scans browser cookies for cursor.com"/>
-                                <Button Content="Authorize via Browser (OAuth Flow)" Command="{Binding OpenCursorUrlCommand}" 
-                                        Style="{DynamicResource AuthActionButton}" Foreground="{DynamicResource CatSubtext}" 
-                                        Margin="12,0,0,0"/>
-                            </StackPanel>
-
-                            <TextBox Style="{DynamicResource PremiumTextBox}"
-                                     materialDesign:HintAssist.Hint="Cursor Token (WorkosCursorSessionToken=...)" 
-                                     Text="{Binding CursorCookie}" 
-                                     materialDesign:TextFieldAssist.UnderlineBrush="{DynamicResource CatMauve}"/>
-                        </StackPanel>
-                    </materialDesign:Card>
-
-                    <!-- GitHub Copilot -->
-                    <materialDesign:Card Padding="24" UniformCornerRadius="12" Background="{DynamicResource CatSurface0}" Margin="0,0,0,20">
-                        <StackPanel>
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
-                                <materialDesign:PackIcon Kind="Github" Foreground="{DynamicResource CatPeach}" VerticalAlignment="Center" Width="24" Height="24"/>
-                                <TextBlock Text="GitHub Copilot" Style="{DynamicResource HeaderStyle}" FontSize="18" Margin="12,0,0,0" VerticalAlignment="Center"/>
-                            </StackPanel>
-
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
-                                <Button Content="Authorize via Browser (OAuth Flow)" Command="{Binding LoginCopilotCommand}" 
-                                        Style="{DynamicResource MaterialDesignRaisedButton}" 
-                                        Background="{DynamicResource CatPeach}"
-                                        Foreground="{DynamicResource CatBase}"
-                                        Padding="20,0" Height="36" FontWeight="Bold"
-                                        ToolTip="Uses GitHub Device Flow (OAuth)"/>
-                            </StackPanel>
-
-                            <!-- Hero Code Display -->
-                            <Border Background="{DynamicResource CatMantle}" CornerRadius="8" Margin="0,0,0,16" Padding="16"
-                                    Visibility="{Binding AuthCode, Converter={StaticResource StringToVisibilityConverter}}">
-                                <StackPanel HorizontalAlignment="Center">
-                                    <TextBlock Text="ENTER THIS CODE ON GITHUB" FontSize="11" FontWeight="Black" Foreground="{DynamicResource CatSubtext}" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="{Binding AuthCode}" FontSize="42" FontWeight="Black" Foreground="{DynamicResource CatPeach}" HorizontalAlignment="Center" Margin="0,4"/>
-                                    <Button Content="Copy Authorization Code" Click="CopyAuthCode_Click" Style="{DynamicResource MaterialDesignFlatButton}" 
-                                            Foreground="{DynamicResource CatSubtext}" FontSize="12" Height="28" Padding="12,0"/>
-                                </StackPanel>
-                            </Border>
-
-                            <TextBox Style="{DynamicResource PremiumTextBox}"
-                                     materialDesign:HintAssist.Hint="GitHub API Token (ghp_...)" 
-                                     Text="{Binding CopilotToken}" 
-                                     materialDesign:TextFieldAssist.UnderlineBrush="{DynamicResource CatPeach}"/>
-                        </StackPanel>
-                    </materialDesign:Card>
-
-                    <!-- OpenAI / ChatGPT -->
-                    <materialDesign:Card Padding="24" UniformCornerRadius="12" Background="{DynamicResource CatSurface0}" Margin="0,0,0,20">
-                        <StackPanel>
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
-                                <materialDesign:PackIcon Kind="CircleMultipleOutline" Foreground="{DynamicResource CatGreen}" VerticalAlignment="Center" Width="24" Height="24"/>
-                                <TextBlock Text="OpenAI / ChatGPT" Style="{DynamicResource HeaderStyle}" FontSize="18" Margin="12,0,0,0" VerticalAlignment="Center"/>
-                            </StackPanel>
-
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
-                                <Button Content="Auto-Detect Session" Command="{Binding AutoDetectChatGPTCommand}" 
-                                        Style="{DynamicResource AuthActionButton}" Foreground="{DynamicResource CatGreen}"
-                                        ToolTip="Scans browser cookies for chatgpt.com &amp; openai.com"/>
-                                <Button Content="Authorize via Browser (OAuth Flow)" Command="{Binding OpenChatGPTUrlCommand}" 
-                                        Style="{DynamicResource AuthActionButton}" Foreground="{DynamicResource CatSubtext}" 
-                                        Margin="12,0,0,0"/>
-                            </StackPanel>
-
-                            <TextBox Style="{DynamicResource PremiumTextBox}"
-                                     materialDesign:HintAssist.Hint="Session Token (__Secure-next-auth.session-token=...)" 
-                                     Text="{Binding ChatgptCookie}" 
-                                     materialDesign:TextFieldAssist.UnderlineBrush="{DynamicResource CatGreen}"/>
-                        </StackPanel>
-                    </materialDesign:Card>
+                                        <!-- Dynamic Settings Fields -->
+                                        <ItemsControl ItemsSource="{Binding Settings}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <ContentControl>
+                                                        <ContentControl.Style>
+                                                            <Style TargetType="ContentControl">
+                                                                <Style.Triggers>
+                                                                    <!-- Picker -->
+                                                                    <DataTrigger Binding="{Binding IsPicker}" Value="True">
+                                                                        <Setter Property="ContentTemplate">
+                                                                            <Setter.Value>
+                                                                                <DataTemplate>
+                                                                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                                                                        <TextBlock Text="{Binding Definition.DisplayName}" VerticalAlignment="Center" Width="120" Foreground="{DynamicResource CatSubtext}"/>
+                                                                                        <ComboBox SelectedValue="{Binding Value}" ItemsSource="{Binding Definition.Options}" Width="160"/>
+                                                                                    </StackPanel>
+                                                                                </DataTemplate>
+                                                                            </Setter.Value>
+                                                                        </Setter>
+                                                                    </DataTrigger>
+                                                                    <!-- SecretField -->
+                                                                    <DataTrigger Binding="{Binding IsSecretField}" Value="True">
+                                                                        <Setter Property="ContentTemplate">
+                                                                            <Setter.Value>
+                                                                                <DataTemplate>
+                                                                                    <TextBox Style="{DynamicResource PremiumTextBox}"
+                                                                                             materialDesign:HintAssist.Hint="{Binding Definition.DisplayName}" 
+                                                                                             Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" 
+                                                                                             materialDesign:TextFieldAssist.UnderlineBrush="{Binding DataContext.ColorHex, RelativeSource={RelativeSource AncestorType=ItemsControl, AncestorLevel=2}, Converter={StaticResource HexToBrushConverter}}"/>
+                                                                                </DataTemplate>
+                                                                            </Setter.Value>
+                                                                        </Setter>
+                                                                    </DataTrigger>
+                                                                    <!-- TextField -->
+                                                                    <DataTrigger Binding="{Binding IsTextField}" Value="True">
+                                                                        <Setter Property="ContentTemplate">
+                                                                            <Setter.Value>
+                                                                                <DataTemplate>
+                                                                                    <TextBox Style="{DynamicResource PremiumTextBox}"
+                                                                                             materialDesign:HintAssist.Hint="{Binding Definition.DisplayName}" 
+                                                                                             Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}"/>
+                                                                                </DataTemplate>
+                                                                            </Setter.Value>
+                                                                        </Setter>
+                                                                    </DataTrigger>
+                                                                    <!-- Toggle -->
+                                                                    <DataTrigger Binding="{Binding IsToggle}" Value="True">
+                                                                        <Setter Property="ContentTemplate">
+                                                                            <Setter.Value>
+                                                                                <DataTemplate>
+                                                                                    <CheckBox Content="{Binding Definition.DisplayName}" IsChecked="{Binding ToggleValue, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,12" />
+                                                                                </DataTemplate>
+                                                                            </Setter.Value>
+                                                                        </Setter>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </ContentControl.Style>
+                                                    </ContentControl>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </materialDesign:Card>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                 </StackPanel>
             </Border>
         </ScrollViewer>

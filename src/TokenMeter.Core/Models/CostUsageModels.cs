@@ -2,6 +2,24 @@ using System.Text.Json.Serialization;
 
 namespace TokenMeter.Core.Models;
 
+// ── Provider cost snapshot (real cost/credit data) ──────────────────────
+
+/// <summary>
+/// Real cost or credit usage snapshot from a provider (e.g., Claude Extra Usage).
+/// Values are in the provider's native currency (USD, CNY, etc).
+/// Used: amount consumed in the current period.
+/// Limit: monthly/period limit (if applicable).
+/// </summary>
+public sealed record ProviderCostSnapshot
+{
+    public required double Used { get; init; }
+    public double? Limit { get; init; }
+    public required string CurrencyCode { get; init; }
+    public required string Period { get; init; }
+    public DateTimeOffset? ResetsAt { get; init; }
+    public DateTimeOffset UpdatedAt { get; init; }
+}
+
 // ── Token-cost snapshot (aggregated view) ──────────────────────────────
 
 public sealed record CostUsageTokenSnapshot
@@ -11,6 +29,7 @@ public sealed record CostUsageTokenSnapshot
     public double? SessionCostUsd { get; init; }
     public int? Last30DaysTokens { get; init; }
     public double? Last30DaysCostUsd { get; init; }
+    public ProviderCostSnapshot? ProviderCost { get; init; }
     public IReadOnlyList<DailyEntry> Daily { get; init; } = [];
     public DateTimeOffset UpdatedAt { get; init; }
 }

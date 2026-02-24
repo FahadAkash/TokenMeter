@@ -90,6 +90,11 @@ public partial class ProviderItemViewModel : ObservableObject
 public partial class MainViewModel : ObservableObject
 {
     [ObservableProperty] private string _providerCountText = "0";
+    [ObservableProperty] private double _totalCostUsdToday = 0.0;
+
+    // LiveCharts Series for the Total App Aggregated Cost
+    [ObservableProperty] private ISeries[] _totalCostSeries = [];
+    [ObservableProperty] private Axis[] _totalCostXAxes = [new Axis { Labels = [] }];
 
     public ObservableCollection<ProviderItemViewModel> Providers { get; } = [];
 
@@ -107,6 +112,15 @@ public partial class MainViewModel : ObservableObject
         _tokenStore = tokenStore;
         _scopeFactory = scopeFactory;
 
+        var overviewVm = new ProviderItemViewModel
+        {
+            Name = "Overview",
+            StatusText = "App global aggregated cost",
+            StatusBadge = "Total",
+            StatusColor = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(166, 218, 149)),
+        };
+        Providers.Add(overviewVm);
+
         foreach (var p in Enum.GetValues<UsageProvider>())
         {
             var vm = new ProviderItemViewModel
@@ -120,7 +134,7 @@ public partial class MainViewModel : ObservableObject
             Providers.Add(vm);
         }
 
-        ProviderCountText = Providers.Count.ToString();
+        ProviderCountText = (Providers.Count - 1).ToString(); // Subtract 1 for Overview
         SelectedProvider = Providers.FirstOrDefault();
 
         if (_pipeline != null)
@@ -134,6 +148,53 @@ public partial class MainViewModel : ObservableObject
 
             // Initial load from DB
             Task.Run(LoadHistoricalDataAsync);
+            Task.Run(LoadAggregateHistoryAsync);
+        }
+    }
+
+    private async Task LoadAggregateHistoryAsync()
+    {
+        if (_scopeFactory == null) return;
+        using var scope = _scopeFactory.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        var history = await db.CostHistory
+            .OrderByDescending(e => e.Date)
+            .Take(7)
+            .ToListAsync();
+
+        if (history.Any())
+        {
+            var entries = history.OrderBy(e => e.Date).ToList();
+            var labels = entries.Select(e => e.Date.ToString("MMM dd")).ToArray();
+            var costData = entries.Select(e => (double)e.TotalCostUsd).ToArray();
+
+            var latest = entries.Last();
+
+            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            {
+                TotalCostUsdToday = (double)latest.TotalCostUsd;
+
+                TotalCostXAxes = [
+                    new Axis
+                    {
+                        Labels = labels,
+                        LabelsPaint = new SolidColorPaint(SKColor.Parse("#A5ADCB")),
+                        TextSize = 12
+                    }
+                ];
+
+                TotalCostSeries = [
+                    new ColumnSeries<double>
+                    {
+                        Values = costData,
+                        Name = "Total Cost ($)",
+                        Fill = new SolidColorPaint(SKColor.Parse("#A6DA95")),
+                        MaxBarWidth = 24,
+                        Rx = 4, Ry = 4
+                    }
+                ];
+            });
         }
     }
 
@@ -160,6 +221,8 @@ public partial class MainViewModel : ObservableObject
                 System.Windows.Application.Current.Dispatcher.Invoke(() => providerVm.UpdateFromHistory(history));
             }
         }
+
+        // Let's also refresh the Total App Cost Historical chart here when implemented
     }
 
     private async Task RefreshProvidersAsync()
@@ -173,24 +236,37 @@ public partial class MainViewModel : ObservableObject
             if (!Enum.TryParse<UsageProvider>(providerVm.Name, out var providerEnum)) continue;
 
             string? token = null;
-            var sourceMode = global::TokenMeter.Probes.ProviderSourceMode.Web;
+            var sourceMode = global::TokenMeter.Probes.ProviderSourceMode.Auto;
 
-            // Map provider to its stored credential key
-            switch (providerEnum)
+            // Read per-provider source mode preference from token store (if available)
+            try
             {
-                case UsageProvider.Claude:
-                    token = await tokenStore.GetAsync("claude_cookie");
-                    break;
-                case UsageProvider.Codex: // OpenAI (ChatGPT)
-                    token = await tokenStore.GetAsync("openai_cookie");
-                    break;
-                case UsageProvider.Cursor:
-                    token = await tokenStore.GetAsync("cursor_cookie");
-                    break;
-                case UsageProvider.Copilot:
-                    token = await tokenStore.GetAsync("copilot_token");
-                    sourceMode = global::TokenMeter.Probes.ProviderSourceMode.Api;
-                    break;
+                string key = providerEnum switch
+                {
+                    UsageProvider.Claude => "claude_source_mode",
+                    UsageProvider.Codex => "chatgpt_source_mode",
+                    UsageProvider.Cursor => "cursor_source_mode",
+                    UsageProvider.Copilot => "copilot_source_mode",
+                    _ => $"{providerEnum.ToString().ToLowerInvariant()}_source_mode"
+                };
+
+                if (!string.IsNullOrEmpty(key) && tokenStore != null)
+                {
+                    var modeStr = await tokenStore.GetAsync(key) ?? string.Empty;
+                    if (!string.IsNullOrWhiteSpace(modeStr) && Enum.TryParse<global::TokenMeter.Probes.ProviderSourceMode>(modeStr, true, out var parsed))
+                        sourceMode = parsed;
+                }
+            }
+            catch { /* ignore and keep default Auto */ }
+
+            // Modern credential discovery using TokenAccountManager
+            // For now, instantiate it directly to reuse logic, ideally inject it.
+            var tokenAccountManager = new TokenMeter.Auth.Stores.TokenAccountManager(tokenStore!);
+            token = await tokenAccountManager.GetPrimaryCredentialsAsync(providerEnum);
+
+            if (providerEnum == UsageProvider.Copilot)
+            {
+                sourceMode = global::TokenMeter.Probes.ProviderSourceMode.Api;
             }
 
             // For Copilot, we continue even if token is null because the probe can auto-detect
@@ -206,7 +282,8 @@ public partial class MainViewModel : ObservableObject
             {
                 Runtime = global::TokenMeter.Probes.ProviderRuntime.App,
                 SourceMode = sourceMode,
-                ApiToken = token ?? ""
+                ApiToken = token ?? "",
+                TargetProvider = providerEnum
             };
 
             var outcome = await pipeline.FetchAsync(context, providerEnum);
@@ -266,6 +343,34 @@ public partial class MainViewModel : ObservableObject
             entry.InputTokens = (long)Math.Max(entry.InputTokens, snapshot.SessionTokens ?? 0);
             entry.OutputTokens = (long)Math.Max(entry.OutputTokens, snapshot.SessionOutputTokens ?? 0);
             entry.TotalCost = Math.Max(entry.TotalCost, snapshot.SessionCostUsd ?? 0.0);
+        }
+
+        // Aggregate across all providers for today's CostHistorySnapshot
+        var snapshotEntry = await db.CostHistory.FirstOrDefaultAsync(e => e.Date == today);
+        if (snapshotEntry == null)
+        {
+            snapshotEntry = new CostHistorySnapshot
+            {
+                Date = today,
+                TotalCostUsd = (decimal)entry.TotalCost
+            };
+            db.CostHistory.Add(snapshotEntry);
+        }
+        else
+        {
+            // Sum all provider costs for today manually (could be optimized, but ok for small N)
+            var allTodayProviderCosts = await db.UsageEntries
+                .Where(e => e.Date == today && e.Provider != provider)
+                .SumAsync(e => e.TotalCost);
+
+            db.CostHistory.Remove(snapshotEntry);
+            var updatedSnapshotEntry = new CostHistorySnapshot
+            {
+                Id = snapshotEntry.Id,
+                Date = snapshotEntry.Date,
+                TotalCostUsd = (decimal)(allTodayProviderCosts + entry.TotalCost)
+            };
+            db.CostHistory.Add(updatedSnapshotEntry);
         }
 
         await db.SaveChangesAsync();

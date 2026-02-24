@@ -51,6 +51,12 @@ public sealed record ProviderFetchContext
         = new Dictionary<string, string>();
     public HttpClient? HttpClient { get; init; }
     public string? ApiToken { get; init; }
+
+    /// <summary>
+    /// Explicit target provider. Some generic probes (like GenericApiProbe) require this
+    /// to determine which endpoint descriptor to use if they aren't bound to one statically.
+    /// </summary>
+    public UsageProvider? TargetProvider { get; init; }
 }
 
 /// <summary>
